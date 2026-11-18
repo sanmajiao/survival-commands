@@ -1,6 +1,8 @@
-# 生存指令权限
+# 禁止联机开创
 
 Minecraft Java 版模组。按游戏版本和加载器选择对应的 JAR，复制到该实例的 `mods` 目录。
+
+作者 `sanmajiao`。 [Modrinth](https://modrinth.com/project/survival-commands) · [GitHub 下载](https://github.com/sanmajiao/survival-commands/releases)
 
 | 游戏版本 | 构建 | Java |
 | --- | --- | --- |

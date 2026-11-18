@@ -1,11 +1,15 @@
 modLoader="javafml"
 loaderVersion="[${forgeMajor},)"
 license="All Rights Reserved"
+issueTrackerURL="https://github.com/sanmajiao/survival-commands/issues"
 
 [[mods]]
 modId="survivalcommands"
 version="${version}"
-displayName="Survival Commands"
+displayName="禁止联机开创"
+authors="sanmajiao"
+displayURL="https://modrinth.com/project/survival-commands"
+logoFile="assets/survivalcommands/icon.png"
 description="Configure individual commands for survival worlds without granting operator access."
 displayTest="IGNORE_ALL_VERSION"
 

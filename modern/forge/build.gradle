@@ -4,6 +4,7 @@ plugins {
 }
 
 def minecraftVersion = rootProject.minecraftVersion
+def target = rootProject.minecraftTarget
 def loaderSources = rootProject.file('../forge/src/main')
 def legacyPack = new File(loaderSources, 'resources/pack.mcmeta')
 base.archivesName = "survivalcommands-${minecraftVersion}-forge"
@@ -34,13 +35,13 @@ repositories {
 }
 
 dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${minecraftVersion}-66.1.8")
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraftVersion}-${target.forge}")
 }
 
 processResources {
-    def metadata = [version: project.version, minecraft: minecraftVersion, forgeMajor: 66]
+    def metadata = [version: project.version, minecraft: minecraftVersion, forgeMajor: target.forgeMajor, pack: target.pack]
     inputs.properties(metadata)
-    filesMatching('META-INF/mods.toml') {
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand(metadata)
     }
 }

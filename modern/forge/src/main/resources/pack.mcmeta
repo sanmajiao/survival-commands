@@ -1,7 +1,7 @@
 {
   "pack": {
     "description": "Survival Commands resources",
-    "min_format": 121,
-    "max_format": 121
+    "min_format": ${pack},
+    "max_format": ${pack}
   }
 }

@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.survivalcommands.mixin.commands",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CommandsMixin",
+    "ForgeCommandHelperMixin",
+    "ServerCommandsMixin",
+    "ServerPermissionsPacketMixin",
+    "ClientboundPermissionCodecMixin",
+    "ServerboundPermissionCodecMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

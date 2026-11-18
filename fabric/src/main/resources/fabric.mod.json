@@ -2,8 +2,16 @@
   "schemaVersion": 1,
   "id": "survivalcommands",
   "version": "${version}",
-  "name": "Survival Commands",
+  "name": "禁止联机开创",
+  "icon": "assets/survivalcommands/icon.png",
   "description": "Configure individual commands for survival worlds without granting operator access.",
+  "authors": ["sanmajiao"],
+  "contact": {
+    "homepage": "https://modrinth.com/project/survival-commands",
+    "sources": "https://github.com/sanmajiao/survival-commands",
+    "issues": "https://github.com/sanmajiao/survival-commands/issues"
+  },
+  "license": "All Rights Reserved",
   "environment": "*",
   "entrypoints": {
     "main": ["dev.survivalcommands.fabric.FabricEntrypoint"]

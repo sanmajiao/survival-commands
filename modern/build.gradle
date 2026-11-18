@@ -1,15 +1,29 @@
 import org.gradle.api.attributes.java.TargetJvmVersion
 
-ext.minecraftVersion = '26.3'
+def modernTargets = [
+    '26.3': [forge: '66.1.8', forgeMajor: 66, pack: 121, mod: '0.1.2'],
+    '26.2': [forge: '65.1.6', forgeMajor: 65, pack: 107, mod: '0.1.2']
+]
+ext.minecraftVersion = providers.gradleProperty('minecraftVersion').getOrElse('26.3')
+ext.minecraftTarget = modernTargets[minecraftVersion]
+if (minecraftTarget == null) {
+    throw new GradleException("Unsupported Minecraft target: ${minecraftVersion}")
+}
 def sharedMain = file('../shared/src/main')
-def versionMain = file('../versions/26.3/shared/src/main')
+def modernMain = file('../versions/26.3/shared/src/main')
+def versionMain = file("../versions/${minecraftVersion}/shared/src/main")
+def orderedSources = [sharedMain, modernMain, versionMain].unique()
 def removedSharedJava = [
     'dev/survivalcommands/lan/McWifiPnpAdapter.java',
     'dev/survivalcommands/mixin/lan/McWifiPnpOpenToLanMixin.java',
     'dev/survivalcommands/mixin/lan/McWifiPnpTabbedLanMixin.java',
     'dev/survivalcommands/mixin/lan/PlayerListMixin.java'
 ] as Set
-ext.mixinConfigs = [sharedMain, versionMain].collectMany { directory ->
+def removedModernJava = minecraftVersion == '26.2' ? [
+    'dev/survivalcommands/mixin/commands/ServerCommandSuggestionsMixin.java',
+    'dev/survivalcommands/mixin/lan/WorldOptionsScreenMixin.java'
+] as Set : [] as Set
+ext.mixinConfigs = orderedSources.collectMany { directory ->
     fileTree(new File(directory, 'resources')).matching {
         include 'survivalcommands.*.mixins.json'
     }.files.collect { it.name }
@@ -17,7 +31,10 @@ ext.mixinConfigs = [sharedMain, versionMain].collectMany { directory ->
 
 subprojects {
     group = 'dev.survivalcommands'
-    version = '0.1.1'
+    version = rootProject.minecraftTarget.mod
+    if (rootProject.minecraftVersion != '26.3') {
+        layout.buildDirectory = layout.projectDirectory.dir("build/${rootProject.minecraftVersion}")
+    }
 
     plugins.withType(JavaPlugin).configureEach {
         java.toolchain.languageVersion = JavaLanguageVersion.of(25)
@@ -26,12 +43,14 @@ subprojects {
         }
         sourceSets.main {
             [[java, 'java'], [resources, 'resources']].each { sourceSet, kind ->
-                def base = new File(sharedMain, kind)
-                def overrides = new File(versionMain, kind)
-                sourceSet.srcDirs(base, overrides)
+                def layers = orderedSources.collect { new File(it, kind) }
+                sourceSet.srcDirs(layers)
                 sourceSet.exclude { detail ->
-                    detail.file.toPath().startsWith(base.toPath()) &&
-                        (new File(overrides, detail.path).isFile() || kind == 'java' && removedSharedJava.contains(detail.path))
+                    int layer = layers.findIndexOf { detail.file.toPath().startsWith(it.toPath()) }
+                    if (layer < 0) return false
+                    (layer == 0 && kind == 'java' && removedSharedJava.contains(detail.path)) ||
+                        (layer == 1 && kind == 'java' && removedModernJava.contains(detail.path)) ||
+                        layers.drop(layer + 1).any { new File(it, detail.path).isFile() }
                 }
             }
         }
