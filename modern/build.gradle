@@ -1,0 +1,48 @@
+import org.gradle.api.attributes.java.TargetJvmVersion
+
+ext.minecraftVersion = '26.3'
+def sharedMain = file('../shared/src/main')
+def versionMain = file('../versions/26.3/shared/src/main')
+def removedSharedJava = [
+    'dev/survivalcommands/lan/McWifiPnpAdapter.java',
+    'dev/survivalcommands/mixin/lan/McWifiPnpOpenToLanMixin.java',
+    'dev/survivalcommands/mixin/lan/McWifiPnpTabbedLanMixin.java',
+    'dev/survivalcommands/mixin/lan/PlayerListMixin.java'
+] as Set
+ext.mixinConfigs = [sharedMain, versionMain].collectMany { directory ->
+    fileTree(new File(directory, 'resources')).matching {
+        include 'survivalcommands.*.mixins.json'
+    }.files.collect { it.name }
+}.unique().sort()
+
+subprojects {
+    group = 'dev.survivalcommands'
+    version = '0.1.1'
+
+    plugins.withType(JavaPlugin).configureEach {
+        java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+        configurations.matching { it.name.endsWith('Classpath') }.configureEach {
+            attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
+        }
+        sourceSets.main {
+            [[java, 'java'], [resources, 'resources']].each { sourceSet, kind ->
+                def base = new File(sharedMain, kind)
+                def overrides = new File(versionMain, kind)
+                sourceSet.srcDirs(base, overrides)
+                sourceSet.exclude { detail ->
+                    detail.file.toPath().startsWith(base.toPath()) &&
+                        (new File(overrides, detail.path).isFile() || kind == 'java' && removedSharedJava.contains(detail.path))
+                }
+            }
+        }
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+            // Forge 26.3 ships Mixin 0.8.7, whose highest compatibility level is JAVA_21.
+            options.release = 21
+        }
+        tasks.withType(AbstractArchiveTask).configureEach {
+            preserveFileTimestamps = false
+            reproducibleFileOrder = true
+        }
+    }
+}

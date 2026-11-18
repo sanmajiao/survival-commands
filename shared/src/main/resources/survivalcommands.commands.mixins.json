@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.survivalcommands.mixin.commands",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "survivalcommands.refmap.json",
+  "mixins": [
+    "CommandsMixin",
+    "ForgeCommandHelperMixin",
+    "ServerCommandsMixin",
+    "ServerPermissionsPacketMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "survivalcommands",
+  "version": "${version}",
+  "name": "Survival Commands",
+  "description": "Configure individual commands for survival worlds without granting operator access.",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.survivalcommands.fabric.FabricEntrypoint"]
+  },
+  "mixins": ["survivalcommands.commands.mixins.json", "survivalcommands.guard.mixins.json", "survivalcommands.lan.mixins.json", "survivalcommands.ui.mixins.json"],
+  "depends": {
+    "fabricloader": ">=${fabricMin}",
+    "minecraft": "${minecraft}",
+    "java": ">=${java}"
+  }
+}

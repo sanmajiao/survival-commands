@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "description": "Survival Commands resources",
+    "pack_format": ${packFormat}
+  }
+}

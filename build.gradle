@@ -1,0 +1,52 @@
+def targets = [
+    '1.20.1': [java: 17, forge: '47.4.10', forgeMajor: 47, fabric: '0.16.14', fabricMin: '0.15.0', mixin: '0.8.5', packFormat: 15],
+    '1.21.1': [java: 21, forge: '52.0.56', forgeMajor: 52, fabric: '0.16.14', fabricMin: '0.15.11', mixin: '0.8.7', packFormat: 34]
+]
+def selectedVersion = providers.gradleProperty('minecraftVersion').getOrElse('1.20.1')
+def target = targets[selectedVersion]
+if (target == null) {
+    throw new GradleException("Unsupported Minecraft build target: ${selectedVersion}. Choose ${targets.keySet().join(' or ')}.")
+}
+
+ext.minecraftVersion = selectedVersion
+ext.minecraftTarget = target
+
+def sharedSources = file('shared/src/main')
+def versionSources = file("versions/${selectedVersion}/shared/src/main")
+def sharedResources = new File(sharedSources, 'resources')
+def versionResources = new File(versionSources, 'resources')
+ext.mixinConfigs = [sharedResources, versionResources].collectMany { directory ->
+    fileTree(directory).matching { include 'survivalcommands.*.mixins.json' }.files.collect { it.name }
+}.unique().sort()
+
+subprojects {
+    group = 'dev.survivalcommands'
+    version = rootProject.mod_version
+
+    if (selectedVersion != '1.20.1') {
+        layout.buildDirectory = layout.projectDirectory.dir("build/${selectedVersion}")
+    }
+
+    plugins.withType(JavaPlugin).configureEach {
+        java.toolchain.languageVersion = JavaLanguageVersion.of(target.java)
+        sourceSets.main {
+            [[java, 'java'], [resources, 'resources']].each { sourceSet, directoryName ->
+                def baseSources = new File(sharedSources, directoryName)
+                def versionOverrides = new File(versionSources, directoryName)
+                sourceSet.srcDirs(baseSources, versionOverrides)
+                sourceSet.exclude { details ->
+                    details.file.toPath().startsWith(baseSources.toPath()) &&
+                        new File(versionOverrides, details.path).isFile()
+                }
+            }
+        }
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+            options.release = target.java
+        }
+        tasks.withType(AbstractArchiveTask).configureEach {
+            preserveFileTimestamps = false
+            reproducibleFileOrder = true
+        }
+    }
+}

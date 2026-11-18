@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.survivalcommands.mixin.client",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "survivalcommands.refmap.json",
+  "client": ["PauseScreenMixin", "PermissionClientPacketMixin"],
+  "injectors": {"defaultRequire": 1}
+}

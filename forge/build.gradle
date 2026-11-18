@@ -1,0 +1,55 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.38'
+    }
+}
+
+plugins {
+    id 'net.minecraftforge.gradle' version '6.0.42'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+def minecraftVersion = rootProject.minecraftVersion
+def target = rootProject.minecraftTarget
+base.archivesName = "survivalcommands-${minecraftVersion}-forge"
+
+minecraft {
+    mappings channel: 'official', version: minecraftVersion
+    runs {
+        configureEach {
+            workingDirectory project.file("run/${minecraftVersion}")
+            mods {
+                survivalcommands { source sourceSets.main }
+            }
+        }
+        client {}
+        server { args '--nogui' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraftVersion}-${target.forge}"
+    annotationProcessor "org.spongepowered:mixin:${target.mixin}:processor"
+}
+
+mixin {
+    add sourceSets.main, 'survivalcommands.refmap.json'
+    rootProject.mixinConfigs.each { config it }
+}
+
+processResources {
+    def metadata = [version: project.version, minecraft: minecraftVersion, forgeMajor: target.forgeMajor,
+        packFormat: target.packFormat]
+    inputs.properties(metadata)
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand(metadata)
+    }
+}
+
+tasks.named('jar').configure {
+    finalizedBy 'reobfJar'
+}

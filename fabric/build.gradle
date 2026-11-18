@@ -1,0 +1,34 @@
+plugins {
+    id 'fabric-loom' version '1.9.2'
+}
+
+def minecraftVersion = rootProject.minecraftVersion
+def target = rootProject.minecraftTarget
+base.archivesName = "survivalcommands-${minecraftVersion}-fabric"
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${target.fabric}"
+}
+
+loom {
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName = 'survivalcommands.refmap.json'
+    }
+}
+
+processResources {
+    def metadata = [version: project.version, minecraft: minecraftVersion, java: target.java,
+        fabricMin: target.fabricMin]
+    def mixinConfigsJson = groovy.json.JsonOutput.toJson(rootProject.mixinConfigs)
+    inputs.properties(metadata)
+    inputs.property('mixinConfigs', mixinConfigsJson)
+    filesMatching('fabric.mod.json') {
+        expand(metadata)
+        filter { line ->
+            line.trim().startsWith('"mixins":') ? "  \"mixins\": ${mixinConfigsJson},".toString() : line
+        }
+    }
+}

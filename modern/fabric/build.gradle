@@ -1,0 +1,29 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+def minecraftVersion = rootProject.minecraftVersion
+def loaderSources = rootProject.file('../fabric/src/main')
+base.archivesName = "survivalcommands-${minecraftVersion}-fabric"
+sourceSets.main {
+    java.srcDir new File(loaderSources, 'java')
+    resources.srcDir new File(loaderSources, 'resources')
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    implementation 'net.fabricmc:fabric-loader:0.20.1'
+}
+
+processResources {
+    def metadata = [version: project.version, minecraft: minecraftVersion, java: 25, fabricMin: '0.19.5']
+    def mixinConfigsJson = groovy.json.JsonOutput.toJson(rootProject.mixinConfigs)
+    inputs.properties(metadata)
+    inputs.property('mixinConfigs', mixinConfigsJson)
+    filesMatching('fabric.mod.json') {
+        expand(metadata)
+        filter { line ->
+            line.trim().startsWith('"mixins":') ? "  \"mixins\": ${mixinConfigsJson},".toString() : line
+        }
+    }
+}

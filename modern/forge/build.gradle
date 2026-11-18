@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '7.0.40'
+}
+
+def minecraftVersion = rootProject.minecraftVersion
+def loaderSources = rootProject.file('../forge/src/main')
+def legacyPack = new File(loaderSources, 'resources/pack.mcmeta')
+base.archivesName = "survivalcommands-${minecraftVersion}-forge"
+sourceSets.main {
+    java.srcDir new File(loaderSources, 'java')
+    resources.srcDir new File(loaderSources, 'resources')
+    resources.exclude { detail -> detail.file == legacyPack }
+}
+
+minecraft {
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+            rootProject.mixinConfigs.each { args "--mixin.config=${it}" }
+        }
+        register('client')
+        register('server') {
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraftVersion}-66.1.8")
+}
+
+processResources {
+    def metadata = [version: project.version, minecraft: minecraftVersion, forgeMajor: 66]
+    inputs.properties(metadata)
+    filesMatching('META-INF/mods.toml') {
+        expand(metadata)
+    }
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes['MixinConfigs'] = rootProject.mixinConfigs.join(',')
+    }
+}
