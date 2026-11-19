@@ -37,6 +37,16 @@ public final class CommandPermissions {
         return Collections.unmodifiableSet(enabled);
     }
 
+    public Set<String> enabled(MinecraftServer server) {
+        TreeSet<String> effective = new TreeSet<>(enabled);
+        for (CommandCatalog.Entry entry : CommandCatalog.entries(server)) {
+            if (CommandCompatibility.allows(server, entry)) {
+                effective.add(entry.id());
+            }
+        }
+        return Collections.unmodifiableSet(effective);
+    }
+
     public boolean setEnabled(String id, boolean value) {
         boolean changed = value ? enabled.add(id) : enabled.remove(id);
         if (changed) {
@@ -52,7 +62,7 @@ public final class CommandPermissions {
         }
         StringReader arguments = new StringReader(reader);
         String root = readToken(arguments);
-        CommandCatalog.Entry entry = CommandCatalog.forRoot(root);
+        CommandCatalog.Entry entry = CommandCatalog.forRoot(server, root);
         if (entry == null) {
             return source;
         }
@@ -69,7 +79,7 @@ public final class CommandPermissions {
                     && (!mode.equals("creative") || !CreativeModePolicy.isLocked(server))
                     && (enabled.contains(id) || enabled.contains(id + "/" + mode));
         }
-        if (enabled.contains(id)) {
+        if (enabled.contains(id) || CommandCompatibility.allows(server, entry)) {
             return true;
         }
         while (node != null && arguments.canRead()) {
@@ -102,11 +112,11 @@ public final class CommandPermissions {
 
     public static boolean canUseForTree(CommandNode<CommandSourceStack> node, CommandSourceStack source) {
         MinecraftServer server = source.getServer();
-        CommandCatalog.Entry entry = CommandCatalog.forRoot(node.getName());
+        CommandCatalog.Entry entry = CommandCatalog.forRoot(server, node.getName());
         if (entry != null && applies(server)
                 && server.getCommands().getDispatcher().getRoot().getChild(node.getName()) == node) {
             TreeSet<String> enabled = forWorld(server).enabled;
-            if (enabled.contains(entry.id())) {
+            if (enabled.contains(entry.id()) || CommandCompatibility.allows(server, entry)) {
                 return node.canUse(GameCommandAccess.elevate(source));
             }
             String prefix = entry.id() + "/";

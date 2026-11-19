@@ -83,7 +83,7 @@ public final class PermissionsProtocol {
             return null;
         }
         List<CommandStructure.Setting> entries = CommandStructure.settings(server);
-        Set<String> enabled = CommandPermissions.forWorld(server).enabled();
+        Set<String> enabled = CommandPermissions.forWorld(server).enabled(server);
         FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer());
         data.writeBoolean(canEdit(server, player));
         data.writeVarInt(entries.size());

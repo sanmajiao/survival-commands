@@ -1,12 +1,16 @@
 package dev.survivalcommands.commands;
 
+import net.minecraft.server.MinecraftServer;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/** Registers selectable command groups. Each root must be safe to delegate as a whole. */
+/** Combines registered command groups with roots supplied by the world's dispatcher. */
 public final class CommandCatalog {
     public static final int MAX_ALIASES = 16;
     public static final String GAME_MODE = "gamemode";
@@ -78,6 +82,41 @@ public final class CommandCatalog {
 
     public static synchronized Entry forRoot(String root) {
         return BY_ROOT.get(root);
+    }
+
+    public static List<Entry> entries(MinecraftServer server) {
+        Map<String, Entry> entries = new LinkedHashMap<>();
+        entries().forEach(entry -> entries.put(entry.id(), entry));
+        for (var node : server.getCommands().getDispatcher().getRoot().getChildren()) {
+            if (entries.size() >= CommandStructure.MAX_SETTINGS - GAME_MODES.size()) {
+                break;
+            }
+            Entry entry = forRoot(server, node.getName());
+            if (entry != null) {
+                entries.putIfAbsent(entry.id(), entry);
+            }
+        }
+        return List.copyOf(entries.values());
+    }
+
+    public static Entry forRoot(MinecraftServer server, String root) {
+        Entry registered = forRoot(root);
+        if (registered != null) {
+            return registered;
+        }
+        if (root.isEmpty() || root.getBytes(StandardCharsets.UTF_8).length > CommandStructure.MAX_LENGTH
+                || server.getCommands().getDispatcher().getRoot().getChild(root) == null) {
+            return null;
+        }
+        String id = root;
+        if (!ROOT.matcher(root).matches() || root.indexOf('/') >= 0 || entries().stream()
+                .anyMatch(entry -> entry.id().equals(root))) {
+            id = "mod." + HexFormat.of().formatHex(root.getBytes(StandardCharsets.UTF_8));
+        }
+        if (id.getBytes(StandardCharsets.UTF_8).length > CommandStructure.MAX_LENGTH) {
+            return null;
+        }
+        return new Entry(id, root, List.of());
     }
 
     public record Entry(String id, String command, List<String> aliases) {

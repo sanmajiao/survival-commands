@@ -19,6 +19,10 @@ public final class GameCommandAccess {
                 || LevelBasedPermissionSet.OWNER.hasPermission(permission));
     }
 
+    static CommandSourceStack unprivileged(CommandSourceStack source) {
+        return source.withPermission(LevelBasedPermissionSet.ALL);
+    }
+
     public static boolean isOwner(MinecraftServer server, ServerPlayer player) {
         return server.isSingleplayerOwner(new NameAndId(player.getGameProfile()));
     }

@@ -176,5 +176,16 @@
   "gamerule.doDaylightCycle.keywords": "昼夜循环,时间流逝",
   "gamerule.doWeatherCycle.keywords": "天气更替,天气变化",
   "gamerule.mobGriefing.keywords": "生物破坏,苦力怕破坏",
-  "gamerule.doMobSpawning.keywords": "生物生成,刷怪"
+  "gamerule.doMobSpawning.keywords": "生物生成,刷怪",
+  "survivalcommands.command.carpet": "Carpet rules",
+  "survivalcommands.command.player": "Player bots",
+  "survivalcommands.command.log": "Carpet logging",
+  "survivalcommands.command.script": "Scarpet scripts",
+  "survivalcommands.command.counter": "Hopper counters",
+  "survivalcommands.command.distance": "Measure distance",
+  "survivalcommands.command.perimeterinfo": "Perimeter information",
+  "survivalcommands.command.carpet.list": "List rules",
+  "survivalcommands.command.carpet.setDefault": "Set default rule",
+  "survivalcommands.command.carpet.removeDefault": "Remove default rule",
+  "survivalcommands.command.jeb": "World backups"
 }

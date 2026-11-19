@@ -7,7 +7,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 public final class CommandStructure {
@@ -19,16 +21,19 @@ public final class CommandStructure {
 
     public record Setting(String id, String parentId, String command, List<String> aliases, String labelKey,
                           boolean available) {}
+    private record Branch(String parent, String command, CommandNode<CommandSourceStack> node, int depth) {}
 
     public static List<Setting> settings(MinecraftServer server) {
         var settings = new ArrayList<Setting>();
+        Deque<Branch> branches = new ArrayDeque<>();
         var dispatcherRoot = server.getCommands().getDispatcher().getRoot();
-        for (CommandCatalog.Entry entry : CommandCatalog.entries()) {
+        List<CommandCatalog.Entry> entries = CommandCatalog.entries(server);
+        for (CommandCatalog.Entry entry : entries) {
             var node = entry.roots().stream().map(dispatcherRoot::getChild)
                     .filter(candidate -> candidate != null).findFirst().orElse(null);
             settings.add(new Setting(entry.id(), null, entry.command(), entry.aliases(), entry.labelKey(), node != null));
         }
-        for (CommandCatalog.Entry entry : CommandCatalog.entries()) {
+        for (CommandCatalog.Entry entry : entries) {
             var node = entry.roots().stream().map(dispatcherRoot::getChild)
                     .filter(candidate -> candidate != null).findFirst().orElse(null);
             if (node == null) {
@@ -42,33 +47,38 @@ public final class CommandStructure {
                             !mode.equals("creative") || !CreativeModePolicy.isLocked(server)));
                 }
             } else {
-                addChildren(settings, entry.id(), entry.command(), node, 0);
+                branches.addLast(new Branch(entry.id(), entry.command(), node, 0));
             }
+        }
+        while (!branches.isEmpty() && settings.size() < MAX_SETTINGS) {
+            Branch branch = branches.removeFirst();
+            addChildren(settings, branches, branch);
         }
         return List.copyOf(settings);
     }
 
-    private static void addChildren(List<Setting> settings, String parent, String command,
-                                    CommandNode<CommandSourceStack> node, int depth) {
+    private static void addChildren(List<Setting> settings, Deque<Branch> branches, Branch branch) {
+        int depth = branch.depth();
         if (depth >= MAX_DEPTH) {
             return;
         }
+        CommandNode<CommandSourceStack> node = branch.node();
         if (node.getRedirect() instanceof LiteralCommandNode<CommandSourceStack> redirected) {
             node = redirected;
         }
         for (CommandNode<CommandSourceStack> child : node.getChildren()) {
-            if (settings.size() >= MAX_SETTINGS - CommandCatalog.GAME_MODES.size()) {
+            if (settings.size() >= MAX_SETTINGS) {
                 return;
             }
             if (!(child instanceof LiteralCommandNode<CommandSourceStack> literal)) {
                 continue;
             }
-            String id = childId(parent, literal.getLiteral());
-            String fullCommand = command + " " + literal.getLiteral();
+            String id = childId(branch.parent(), literal.getLiteral());
+            String fullCommand = branch.command() + " " + literal.getLiteral();
             if (id != null && fullCommand.getBytes(StandardCharsets.UTF_8).length <= MAX_LENGTH) {
-                settings.add(new Setting(id, parent, fullCommand, List.of(),
+                settings.add(new Setting(id, branch.parent(), fullCommand, List.of(),
                         "survivalcommands.command." + id.replace('/', '.'), true));
-                addChildren(settings, id, fullCommand, child, depth + 1);
+                branches.addLast(new Branch(id, fullCommand, child, depth + 1));
             }
         }
     }

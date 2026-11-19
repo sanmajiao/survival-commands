@@ -1,5 +1,6 @@
 package dev.survivalcommands.mixin.commands;
 
+import dev.survivalcommands.commands.CommandPermissions;
 import dev.survivalcommands.network.PermissionsProtocol;
 import dev.survivalcommands.network.PermissionPackets;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
@@ -14,15 +15,36 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Set;
+
 @Mixin(ServerGamePacketListenerImpl.class)
 abstract class ServerPermissionsPacketMixin implements PermissionsProtocol.Subscription {
     @Shadow @Final private MinecraftServer server;
     @Shadow public ServerPlayer player;
     @Unique private boolean survivalcommands$subscribed;
+    @Unique private int survivalcommands$syncTicks;
+    @Unique private Set<String> survivalcommands$lastEnabled = Set.of();
 
     @Override
     public boolean survivalcommands$subscribed() {
         return survivalcommands$subscribed;
+    }
+
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void survivalcommands$refreshExternalPermissions(CallbackInfo ci) {
+        if (!survivalcommands$subscribed || ++survivalcommands$syncTicks < 100) {
+            return;
+        }
+        survivalcommands$syncTicks = 0;
+        if (!CommandPermissions.applies(server)) {
+            return;
+        }
+        Set<String> enabled = CommandPermissions.forWorld(server).enabled(server);
+        if (!enabled.equals(survivalcommands$lastEnabled)) {
+            survivalcommands$lastEnabled = enabled;
+            server.getCommands().sendCommands(player);
+            PermissionPackets.sendSnapshot(server, player);
+        }
     }
 
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
