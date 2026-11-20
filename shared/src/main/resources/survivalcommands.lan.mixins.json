@@ -9,6 +9,8 @@
   ],
   "client": [
     "LanOptionsScreenMixin",
+    "ShareToLanScreenMixin",
+    "McWifiPnpLegacyScreenMixin",
     "McWifiPnpOpenToLanMixin",
     "McWifiPnpTabbedLanMixin"
   ],

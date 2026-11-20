@@ -5,8 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "IntegratedLanCheatMixin",
+    "IntegratedLanSessionMixin",
     "LanOptionsScreenMixin",
     "WorldOptionsScreenMixin",
+    "McWifiPnpConfigMixin",
+    "McWifiPnpLanScreenMixin",
     "McWifiPnpWorldOptionsMixin"
   ],
   "injectors": {

@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.function.BooleanSupplier;
+
 @Mixin(MinecraftServer.class)
 abstract class MinecraftServerMixin implements CreativeModePolicy {
     // Capture the save's observed initial game type before LAN or dedicated settings run.
@@ -19,7 +21,12 @@ abstract class MinecraftServerMixin implements CreativeModePolicy {
 
     @Override
     public boolean survivalcommands$isCreativeLocked() {
-        return SurvivalGuard.isCreativeLocked((MinecraftServer) (Object) this);
+        return SurvivalGuard.blocksCreative((MinecraftServer) (Object) this);
+    }
+
+    @Inject(method = "tickServer", at = @At("HEAD"))
+    private void survivalCommands$enforcePublishedRestriction(BooleanSupplier haveTime, CallbackInfo callback) {
+        SurvivalGuard.enforcePublishedRestriction((MinecraftServer) (Object) this);
     }
 
     @Inject(method = "setDefaultGameType", at = @At("HEAD"), cancellable = true)

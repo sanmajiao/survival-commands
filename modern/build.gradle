@@ -1,8 +1,8 @@
 import org.gradle.api.attributes.java.TargetJvmVersion
 
 def modernTargets = [
-    '26.3': [forge: '66.1.8', forgeMajor: 66, pack: 121, mod: '0.1.3'],
-    '26.2': [forge: '65.1.6', forgeMajor: 65, pack: 107, mod: '0.1.3']
+    '26.3': [forge: '66.1.8', forgeMajor: 66, pack: 121, mod: '0.1.4'],
+    '26.2': [forge: '65.1.6', forgeMajor: 65, pack: 107, mod: '0.1.4']
 ]
 ext.minecraftVersion = providers.gradleProperty('minecraftVersion').getOrElse('26.3')
 ext.minecraftTarget = modernTargets[minecraftVersion]
@@ -15,8 +15,11 @@ def versionMain = file("../versions/${minecraftVersion}/shared/src/main")
 def orderedSources = [sharedMain, modernMain, versionMain].unique()
 def removedSharedJava = [
     'dev/survivalcommands/lan/McWifiPnpAdapter.java',
+    'dev/survivalcommands/lan/McWifiPnpLegacyOptions.java',
     'dev/survivalcommands/mixin/lan/McWifiPnpOpenToLanMixin.java',
     'dev/survivalcommands/mixin/lan/McWifiPnpTabbedLanMixin.java',
+    'dev/survivalcommands/mixin/lan/McWifiPnpLegacyScreenMixin.java',
+    'dev/survivalcommands/mixin/lan/ShareToLanScreenMixin.java',
     'dev/survivalcommands/mixin/lan/PlayerListMixin.java'
 ] as Set
 def removedModernJava = minecraftVersion == '26.2' ? [

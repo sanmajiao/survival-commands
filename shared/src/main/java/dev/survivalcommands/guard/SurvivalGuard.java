@@ -1,6 +1,7 @@
 package dev.survivalcommands.guard;
 
 import com.mojang.logging.LogUtils;
+import dev.survivalcommands.lan.LanCreativeRestriction;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
@@ -29,8 +30,12 @@ public final class SurvivalGuard {
         return server != null && CREATIVE_LOCKS.computeIfAbsent(server, SurvivalGuard::load);
     }
 
+    public static boolean blocksCreative(MinecraftServer server) {
+        return isCreativeLocked(server) || LanCreativeRestriction.active(server);
+    }
+
     public static boolean denies(MinecraftServer server, GameType requestedMode) {
-        return requestedMode == GameType.CREATIVE && isCreativeLocked(server);
+        return requestedMode == GameType.CREATIVE && blocksCreative(server);
     }
 
     public static GameType allowedMode(MinecraftServer server, GameType requestedMode) {
@@ -40,6 +45,18 @@ public final class SurvivalGuard {
         GameType defaultMode = server.getWorldData().getGameType();
         return defaultMode == GameType.CREATIVE ? GameType.SURVIVAL : defaultMode;
     }
+
+    public static void enforcePublishedRestriction(MinecraftServer server) {
+        if (LanCreativeRestriction.active(server)) {
+            for (var player : server.getPlayerList().getPlayers()) {
+                if (player.isCreative()) {
+                    player.setGameMode(allowedMode(server, GameType.CREATIVE));
+                }
+            }
+        }
+    }
+
+    // ---------- Permanent world origin and configuration ----------
 
     private static boolean load(MinecraftServer server) {
         Path world = server.getWorldPath(LevelResource.ROOT);

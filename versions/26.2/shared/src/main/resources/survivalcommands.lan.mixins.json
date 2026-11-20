@@ -3,6 +3,10 @@
   "minVersion": "0.8",
   "package": "dev.survivalcommands.mixin.lan",
   "compatibilityLevel": "JAVA_21",
-  "client": ["IntegratedLanCheatMixin", "LanOptionsScreenMixin", "McWifiPnpWorldOptionsMixin"],
+  "client": [
+    "IntegratedLanCheatMixin", "IntegratedLanSessionMixin", "LanOptionsScreenMixin",
+    "MultiplayerOptionsScreenMixin", "McWifiPnpConfigMixin", "McWifiPnpLanScreenMixin",
+    "McWifiPnpWorldOptionsMixin", "McWifiPnpConfigCheatsMixin"
+  ],
   "injectors": { "defaultRequire": 1 }
 }
