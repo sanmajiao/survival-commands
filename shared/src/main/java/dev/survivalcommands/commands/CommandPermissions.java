@@ -39,12 +39,18 @@ public final class CommandPermissions {
 
     public Set<String> enabled(MinecraftServer server) {
         TreeSet<String> effective = new TreeSet<>(enabled);
+        effective.addAll(externalGrants(server));
+        return Collections.unmodifiableSet(effective);
+    }
+
+    public static Set<String> externalGrants(MinecraftServer server) {
+        Set<String> external = new TreeSet<>();
         for (CommandCatalog.Entry entry : CommandCatalog.entries(server)) {
             if (CommandCompatibility.allows(server, entry)) {
-                effective.add(entry.id());
+                external.add(entry.id());
             }
         }
-        return Collections.unmodifiableSet(effective);
+        return external;
     }
 
     public boolean setEnabled(String id, boolean value) {

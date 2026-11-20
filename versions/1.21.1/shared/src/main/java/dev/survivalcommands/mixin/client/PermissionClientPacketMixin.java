@@ -51,7 +51,7 @@ abstract class PermissionClientPacketMixin {
         }
         var entries = snapshot.rows().stream().map(row -> new CommandSettingsClient.Entry(
                 row.entry().id(), row.entry().command(), row.entry().aliases(), row.entry().labelKey(),
-                row.enabled(), row.entry().available(), row.entry().parentId())).toList();
+                row.enabled(), row.entry().available(), row.entry().parentId(), row.external())).toList();
         CommandSettingsClient.sync(new CommandSettingsClient.Snapshot(snapshot.editable(), entries));
     }
 }

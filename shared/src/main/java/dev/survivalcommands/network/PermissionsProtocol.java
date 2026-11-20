@@ -42,7 +42,7 @@ public final class PermissionsProtocol {
         }
     }
 
-    public record Row(CommandStructure.Setting entry, boolean enabled) {}
+    public record Row(CommandStructure.Setting entry, boolean enabled, boolean external) {}
 
     private static boolean canEdit(MinecraftServer server, ServerPlayer player) {
         return player.connection.getRemoteAddress() instanceof LocalAddress
@@ -72,7 +72,7 @@ public final class PermissionsProtocol {
                 int flags = data.readUnsignedByte();
                 String labelKey = "survivalcommands.command." + id.replace('/', '.');
                 var entry = new CommandStructure.Setting(id, parentId, command, List.copyOf(aliases), labelKey, (flags & 1) != 0);
-                rows.add(new Row(entry, (flags & 2) != 0));
+                rows.add(new Row(entry, (flags & 2) != 0, (flags & 4) != 0));
             }
             return new Snapshot(editable, List.copyOf(rows));
         }
@@ -83,7 +83,8 @@ public final class PermissionsProtocol {
             return null;
         }
         List<CommandStructure.Setting> entries = CommandStructure.settings(server);
-        Set<String> enabled = CommandPermissions.forWorld(server).enabled(server);
+        Set<String> enabled = CommandPermissions.forWorld(server).enabled();
+        Set<String> external = CommandPermissions.externalGrants(server);
         FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer());
         data.writeBoolean(canEdit(server, player));
         data.writeVarInt(entries.size());
@@ -98,7 +99,11 @@ public final class PermissionsProtocol {
             for (String alias : entry.aliases()) {
                 data.writeUtf(alias, MAX_ID_LENGTH);
             }
-            int flags = (entry.available() ? 1 : 0) | (enabled.contains(entry.id()) ? 2 : 0);
+            boolean externallyGranted = external.contains(entry.id());
+            // Keep the effective bit for older clients. The extra bit explains the grant on new clients.
+            int flags = (entry.available() ? 1 : 0)
+                    | (enabled.contains(entry.id()) || externallyGranted ? 2 : 0)
+                    | (externallyGranted ? 4 : 0);
             data.writeByte(flags);
         }
         return data;

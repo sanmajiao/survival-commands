@@ -38,9 +38,14 @@ public final class CommandSettingsClient {
     }
 
     public record Entry(String id, String command, List<String> aliases, String labelKey,
-                        boolean enabled, boolean available, String parentId) {
+                        boolean enabled, boolean available, String parentId, boolean external) {
         public Entry {
             aliases = List.copyOf(aliases);
+        }
+
+        public Entry(String id, String command, List<String> aliases, String labelKey,
+                     boolean enabled, boolean available, String parentId) {
+            this(id, command, aliases, labelKey, enabled, available, parentId, false);
         }
 
         public Entry(String id, String command, List<String> aliases, String labelKey,

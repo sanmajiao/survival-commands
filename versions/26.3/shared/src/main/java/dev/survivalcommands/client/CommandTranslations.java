@@ -23,6 +23,10 @@ public final class CommandTranslations {
                 : Component.translatableWithFallback(key, fallback, arguments);
     }
 
+    static boolean hasLanguageKey(String key) {
+        return Language.getInstance().has(key);
+    }
+
     static boolean has(String key) {
         return key != null && (Language.getInstance().has(key) || fallback(key) != null);
     }
